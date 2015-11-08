@@ -1,4 +1,5 @@
 import abc
+import heapq
 
 class Edge(object, metaclass=abc.ABCMeta):
     
@@ -124,4 +125,132 @@ class Graph(object):
     def clear(self):
         self.__edges.clear()
         self.__vertices.clear()
+
+class Dijkstra(object):
+    
+    class __Vertex(object):
+        
+        def __init__(self, distance_table, v):
+            assert distance_table is not None
+            assert isinstance(distance_table, dict)
+            assert v is not None
+            self.__distance_table = distance_table
+            self.__v = v
+        
+        def __hash__(self):
+            return hash(self.__v)
+        
+        def __compare(self, another):
+            assert another is not None
+#            assert isinstance(another, Dijkstra.__Vertex)
+            if not another.v() in self.__distance_table:
+                if not self.v() in self.__distance_table:
+                    return 0
+                else:
+                    return -1
+            else:
+                if not self.v() in self.__distance_table:
+                    return 1
+            d1 = self.__distance_table[self.v()]
+            d2 = self.__distance_table[another.v()]
+            if d1 < d2:
+                return -1
+            if d1 > d2:
+                return 1
+            return 0
+        
+        def __eq__(self, another):
+            return self.__compare(another) == 0
+        
+        def __ne__(self, another):
+            return self.__compare(another) != 0
+        
+        def __gt__(self, another):
+            return self.__compare(another) > 0
+        
+        def __ge__(self, another):
+            return self.__compare(another) >= 0
+        
+        def __lt__(self, another):
+            return self.__compare(another) < 0
+        
+        def __le__(self, another):
+            return self.__compare(another) <= 0
+        
+        def v(self):
+            return self.__v
+    
+    def find_shortest_path(g, v1, v2):
+        if g is None or v1 is None or v2 is None:
+            raise TypeError('Arguments must not be null.')
+        if not isinstance(g, Graph):
+            raise TypeError('First argument must be a Graph object.')
+        if not g.has_vertex(v1) or not g.has_vertex(v2):
+            return []
+        if v1 == v2:
+            return [v1]
+        adj_table = {}
+        weighted = None
+        for e in g.edges():
+            if weighted is None:
+                weighted = e.isweighted()
+            if (weighted and not e.isweighted()) or (not weighted and e.isweighted()):
+                raise Exception('Both weighted and unweighted edges are found...')
+            w = e.weight()
+            if not e.v1() in adj_table:
+                adj_table[e.v1()] = {}
+            adj1 = adj_table[e.v1()]
+            if (not e.v2() in adj1) or (weighted and w < adj1[e.v2()]):
+                adj1[e.v2()] = w
+            if not e.isdirected():
+                if not e.v2() in adj_table:
+                    adj_table[e.v2()] = {}
+                adj2 = adj_table[e.v2()]
+                if (not e.v1() in adj2) or (weighted and w < adj2[e.v1()]):
+                    adj2[e.v1()] = w
+        predecessor_table = {}
+        for v in g.vertices():
+            predecessor_table[v] = None
+        distance_table = {}
+        distance_table[v1] = 0.0
+        heap = []
+        heapq.heapify(heap)
+        for v in g.vertices():
+            heapq.heappush(heap, Dijkstra.__Vertex(distance_table, v))
+        while 0 < len(heap):
+            v = heapq.heappop(heap).v()
+            if not v in distance_table:
+                break
+            if not v in adj_table:
+                continue
+            d1 = distance_table[v]
+            adj = adj_table[v]
+            for x in adj:
+                w = adj[x]
+                if (not x in distance_table) or (d1 + w < distance_table[x]):
+                    predecessor_table[x] = v
+                    distance_table[x] = d1 + w
+                    heapq.heapify(heap)
+        path = []
+        p = v2
+        while p is not None:
+            path.insert(0, p)
+            p = predecessor_table[p]
+        return path
+
+g=Graph()
+g.connect('S','A',True,1.0)
+g.connect('S','B',True,4.0)
+g.connect('A','B',True,4.5)
+g.connect('A','C',True,2.0)
+g.connect('A','D',True,5.0)
+g.connect('B','C',True,2.5)
+g.connect('B','D',True,1.5)
+g.connect('C','Z',True,3.5)
+g.connect('C','B',True,0.5)
+g.connect('C','D',True,2.5)
+g.connect('D','A',True,1.0)
+g.connect('D','C',True,2.0)
+g.connect('D','Z',True,1.0)
+print(Dijkstra.find_shortest_path(g,'S','Z'))
 
