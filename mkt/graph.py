@@ -12,10 +12,6 @@ class Edge(object, metaclass=abc.ABCMeta):
         pass
     
     @abc.abstractmethod
-    def isweighted(self):
-        pass
-    
-    @abc.abstractmethod
     def weight(self):
         pass
 
@@ -42,9 +38,6 @@ class Graph(object):
         def isdirected(self):
             return self.__directed
         
-        def isweighted(self):
-            return self.__weight is not None
-        
         def weight(self):
             return self.__weight
         
@@ -54,9 +47,12 @@ class Graph(object):
             s3 = str(self.__weight)
             return 'Edge{{{0}, d={1}, w={2}}}'.format(s1, s2, s3)
     
-    def __init__(self):
+    def __init__(self, weighted=False):
+        if not isinstance(weighted, bool):
+            raise TypeError('\'weighted\' must be either True or False.')
         self.__vertices = set()
         self.__edges = set()
+        self.__weighted = weighted
     
     def add(self, v):
         if v is None:
@@ -89,10 +85,12 @@ class Graph(object):
             raise TypeError('Objects to be connected must not be None.')
         if not isinstance(directed, bool):
             raise TypeError('\'directed\' must be either True or False.')
-        if isinstance(weight, bool):
-            raise TypeError('\'weight\' must be either a number or None.')
-        if not isinstance(weight, (int, float)) and weight is not None:
-            raise TypeError('\'weight\' must be either a number or None.')
+        if not self.__weighted and weight is not None:
+            raise ValueError('Edges must not be weighted in this graph.')
+        if self.__weighted and weight is None:
+            raise ValueError('Edges must be weighted in this graph.')
+        if self.__weighted and not isinstance(weight, (int, float)):
+            raise TypeError('\'weight\' must be given by a number.')
         self.add(v1)
         self.add(v2)
         e = Graph.__Edge(v1, v2, directed, weight)
@@ -113,6 +111,9 @@ class Graph(object):
     def edges(self):
         return self.__edges.copy()
     
+    def isweighted():
+        return self.__weighted
+    
     def clear(self):
         self.__edges.clear()
         self.__vertices.clear()
@@ -129,14 +130,11 @@ class Dijkstra(object):
         if src == dst:
             return [src]
         adjacency_table = {}
-        weighted = None
         for e in g.edges():
-            if weighted is None:
-                weighted = e.isweighted()
-            if (weighted and not e.isweighted()) or (not weighted and e.isweighted()):
-                raise Exception('Both weighted and unweighted edges are found...')
             (v1, v2) = e.vertices()
             w = e.weight()
+            if w is None:
+                w = 1.0
             if not v1 in adjacency_table:
                 adjacency_table[v1] = []
             adjacency_list = adjacency_table[v1]
@@ -182,7 +180,7 @@ class Dijkstra(object):
         else:
             return []
 
-g=Graph()
+g=Graph(weighted=True)
 g.connect('S', 'A', True, 1.0)
 g.connect('S', 'B', True, 4.0)
 g.connect('A', 'B', True, 4.5)
