@@ -4,11 +4,7 @@ import heapq
 class Edge(object, metaclass=abc.ABCMeta):
     
     @abc.abstractmethod
-    def v1(self):
-        pass
-    
-    @abc.abstractmethod
-    def v2(self):
+    def vertices(self):
         pass
     
     @abc.abstractmethod
@@ -33,19 +29,15 @@ class Graph(object):
             assert isinstance(directed, bool)
             assert not isinstance(weight, bool)
             assert isinstance(weight, (int, float)) or weight is None
-            self.__v1 = v1
-            self.__v2 = v2
+            self.__vertices = (v1, v2)
             self.__directed = directed
             if weight is None:
                 self.__weight = None
             else:
                 self.__weight = float(weight)
         
-        def v1(self):
-            return self.__v1
-        
-        def v2(self):
-            return self.__v2
+        def vertices(self):
+            return self.__vertices
         
         def isdirected(self):
             return self.__directed
@@ -57,11 +49,10 @@ class Graph(object):
             return self.__weight
         
         def __repr__(self):
-            s1 = repr(self.__v1)
-            s2 = repr(self.__v2)
-            s3 = str(self.__directed)
-            s4 = str(self.__weight)
-            return 'Edge{{({0},{1}),d={2},w={3}}}'.format(s1, s2, s3, s4)
+            s1 = repr(self.__vertices)
+            s2 = str(self.__directed)
+            s3 = str(self.__weight)
+            return 'Edge{{{0},d={1},w={2}}}'.format(s1, s2, s3)
     
     def __init__(self):
         self.__vertices = set()
@@ -79,7 +70,7 @@ class Graph(object):
         if v in self.__vertices:
             edges = set()
             for x in self.__edges:
-                if x.v1() == v or x.v2() == v:
+                if v in x.vertices():
                     edges.add(x)
             for x in edges:
                 self.__edges.remove(x)
@@ -128,67 +119,15 @@ class Graph(object):
 
 class Dijkstra(object):
     
-    class __Vertex(object):
-        
-        def __init__(self, distance_table, v):
-            assert distance_table is not None
-            assert isinstance(distance_table, dict)
-            assert v is not None
-            self.__distance_table = distance_table
-            self.__v = v
-        
-        def __hash__(self):
-            return hash(self.__v)
-        
-        def __compare(self, another):
-            assert another is not None
-#            assert isinstance(another, Dijkstra.__Vertex)
-            if not another.v() in self.__distance_table:
-                if not self.v() in self.__distance_table:
-                    return 0
-                else:
-                    return -1
-            else:
-                if not self.v() in self.__distance_table:
-                    return 1
-            d1 = self.__distance_table[self.v()]
-            d2 = self.__distance_table[another.v()]
-            if d1 < d2:
-                return -1
-            if d1 > d2:
-                return 1
-            return 0
-        
-        def __eq__(self, another):
-            return self.__compare(another) == 0
-        
-        def __ne__(self, another):
-            return self.__compare(another) != 0
-        
-        def __gt__(self, another):
-            return self.__compare(another) > 0
-        
-        def __ge__(self, another):
-            return self.__compare(another) >= 0
-        
-        def __lt__(self, another):
-            return self.__compare(another) < 0
-        
-        def __le__(self, another):
-            return self.__compare(another) <= 0
-        
-        def v(self):
-            return self.__v
-    
-    def find_shortest_path(g, v1, v2):
-        if g is None or v1 is None or v2 is None:
+    def find_shortest_path(g, src, dst):
+        if g is None or src is None or dst is None:
             raise TypeError('Arguments must not be null.')
         if not isinstance(g, Graph):
             raise TypeError('First argument must be a Graph object.')
-        if not g.has_vertex(v1) or not g.has_vertex(v2):
+        if not g.has_vertex(src) or not g.has_vertex(dst):
             return []
-        if v1 == v2:
-            return [v1]
+        if src == dst:
+            return [src]
         adj_table = {}
         weighted = None
         for e in g.edges():
@@ -196,43 +135,47 @@ class Dijkstra(object):
                 weighted = e.isweighted()
             if (weighted and not e.isweighted()) or (not weighted and e.isweighted()):
                 raise Exception('Both weighted and unweighted edges are found...')
+            (v1, v2) = e.vertices()
             w = e.weight()
-            if not e.v1() in adj_table:
-                adj_table[e.v1()] = {}
-            adj1 = adj_table[e.v1()]
-            if (not e.v2() in adj1) or (weighted and w < adj1[e.v2()]):
-                adj1[e.v2()] = w
+            if not v1 in adj_table:
+                adj_table[v1] = {}
+            adj1 = adj_table[v1]
+            if (not v2 in adj1) or (weighted and w < adj1[v2]):
+                adj1[v2] = w
             if not e.isdirected():
-                if not e.v2() in adj_table:
-                    adj_table[e.v2()] = {}
-                adj2 = adj_table[e.v2()]
-                if (not e.v1() in adj2) or (weighted and w < adj2[e.v1()]):
-                    adj2[e.v1()] = w
+                if not v2 in adj_table:
+                    adj_table[v2] = {}
+                adj2 = adj_table[v2]
+                if (not v1 in adj2) or (weighted and w < adj2[v1]):
+                    adj2[v1] = w
         predecessor_table = {}
+        distance_table = {}
+        h = []
         for v in g.vertices():
             predecessor_table[v] = None
-        distance_table = {}
-        distance_table[v1] = 0.0
-        heap = []
-        heapq.heapify(heap)
-        for v in g.vertices():
-            heapq.heappush(heap, Dijkstra.__Vertex(distance_table, v))
-        while 0 < len(heap):
-            v = heapq.heappop(heap).v()
-            if not v in distance_table:
+            if v == src:
+                distance_table[v] = 0.0
+                heapq.heappush(h, (0.0, v))
+            else:
+                distance_table[v] = float('inf')
+                heapq.heappush(h, (float('inf'), v))
+        while 0 < len(h):
+            (d, v) = heapq.heappop(h)
+            if d == float('inf'):
                 break
             if not v in adj_table:
                 continue
-            d1 = distance_table[v]
             adj = adj_table[v]
             for x in adj:
-                w = adj[x]
-                if (not x in distance_table) or (d1 + w < distance_table[x]):
+                old_d = distance_table[x]
+                new_d = d + adj[x]
+                if new_d < old_d:
+                    h.remove((old_d, x))
                     predecessor_table[x] = v
-                    distance_table[x] = d1 + w
-                    heapq.heapify(heap)
+                    distance_table[x] = new_d
+                    heapq.heappush(h, (new_d, x))
         path = []
-        p = v2
+        p = dst
         while p is not None:
             path.insert(0, p)
             p = predecessor_table[p]
