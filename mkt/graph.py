@@ -128,7 +128,7 @@ class Dijkstra(object):
             return []
         if src == dst:
             return [src]
-        adj_table = {}
+        adjacency_table = {}
         weighted = None
         for e in g.edges():
             if weighted is None:
@@ -137,17 +137,15 @@ class Dijkstra(object):
                 raise Exception('Both weighted and unweighted edges are found...')
             (v1, v2) = e.vertices()
             w = e.weight()
-            if not v1 in adj_table:
-                adj_table[v1] = {}
-            adj1 = adj_table[v1]
-            if (not v2 in adj1) or (weighted and w < adj1[v2]):
-                adj1[v2] = w
+            if not v1 in adjacency_table:
+                adjacency_table[v1] = []
+            adjacency_list = adjacency_table[v1]
+            adjacency_list.append((v2, w))
             if not e.isdirected():
-                if not v2 in adj_table:
-                    adj_table[v2] = {}
-                adj2 = adj_table[v2]
-                if (not v1 in adj2) or (weighted and w < adj2[v1]):
-                    adj2[v1] = w
+                if not v2 in adjacency_table:
+                    adjacency_table[v2] = []
+                adjacency_list = adjacency_table[v2]
+                adjacency_list.append((v1, w))
         predecessor_table = {}
         distance_table = {}
         h = []
@@ -163,17 +161,17 @@ class Dijkstra(object):
             (d, v) = heapq.heappop(h)
             if d == float('inf'):
                 break
-            if not v in adj_table:
+            if not v in adjacency_table:
                 continue
-            adj = adj_table[v]
-            for x in adj:
-                old_d = distance_table[x]
-                new_d = d + adj[x]
+            adjacency_list = adjacency_table[v]
+            for x in adjacency_list:
+                old_d = distance_table[x[0]]
+                new_d = d + x[1]
                 if new_d < old_d:
-                    h.remove((old_d, x))
-                    predecessor_table[x] = v
-                    distance_table[x] = new_d
-                    heapq.heappush(h, (new_d, x))
+                    h.remove((old_d, x[0]))
+                    predecessor_table[x[0]] = v
+                    distance_table[x[0]] = new_d
+                    heapq.heappush(h, (new_d, x[0]))
         path = []
         p = dst
         while p is not None:
