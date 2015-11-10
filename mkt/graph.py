@@ -52,7 +52,7 @@ class Graph(object):
             s1 = repr(self.__vertices)
             s2 = str(self.__directed)
             s3 = str(self.__weight)
-            return 'Edge{{{0},d={1},w={2}}}'.format(s1, s2, s3)
+            return 'Edge{{{0}, d={1}, w={2}}}'.format(s1, s2, s3)
     
     def __init__(self):
         self.__vertices = set()
@@ -179,21 +179,27 @@ class Dijkstra(object):
         while p is not None:
             path.insert(0, p)
             p = predecessor_table[p]
-        return path
+        if path[0] == src:
+            return path
+        else:
+            return []
 
 g=Graph()
-g.connect('S','A',True,1.0)
-g.connect('S','B',True,4.0)
-g.connect('A','B',True,4.5)
-g.connect('A','C',True,2.0)
-g.connect('A','D',True,5.0)
-g.connect('B','C',True,2.5)
-g.connect('B','D',True,1.5)
-g.connect('C','Z',True,3.5)
-g.connect('C','B',True,0.5)
-g.connect('C','D',True,2.5)
-g.connect('D','A',True,1.0)
-g.connect('D','C',True,2.0)
-g.connect('D','Z',True,1.0)
-print(Dijkstra.find_shortest_path(g,'S','Z'))
+g.connect('S', 'A', True, 1.0)
+g.connect('S', 'B', True, 4.0)
+g.connect('A', 'B', True, 4.5)
+g.connect('A', 'C', True, 2.0)
+g.connect('A', 'D', True, 5.0)
+g.connect('B', 'C', True, 2.5)
+g.connect('B', 'D', True, 1.5)
+g.connect('C', 'Z', True, 3.5)
+g.connect('C', 'B', True, 0.5)
+g.connect('C', 'D', True, 2.5)
+g.connect('D', 'A', True, 1.0)
+g.connect('D', 'C', True, 2.0)
+g.connect('D', 'Z', True, 1.0)
+print(Dijkstra.find_shortest_path(g, 'S', 'Z')) # --> ['S', 'A', 'C', 'B', 'D', 'Z']
+
+g.add('X')
+print(Dijkstra.find_shortest_path(g, 'S', 'X')) # --> []
 
