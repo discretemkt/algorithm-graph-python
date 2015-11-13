@@ -111,7 +111,7 @@ class Graph(object):
     def edges(self):
         return self.__edges.copy()
     
-    def isweighted():
+    def isweighted(self):
         return self.__weighted
     
     def clear(self):
