@@ -19,13 +19,13 @@ class Graph(object):
     
     class __Edge(Edge):
         
-        def __init__(self, v1, v2, directed=False, weight=None):
-            assert v1 is not None
-            assert v2 is not None
-            assert isinstance(directed, bool)
+        def __init__(self, vertex1, vertex2, weight=None, directed=False):
+            assert vertex1 is not None
+            assert vertex2 is not None
             assert not isinstance(weight, bool)
             assert isinstance(weight, (int, float)) or weight is None
-            self.__vertices = (v1, v2)
+            assert isinstance(directed, bool)
+            self.__vertices = (vertex1, vertex2)
             self.__directed = directed
             if weight is None:
                 self.__weight = None
@@ -35,17 +35,18 @@ class Graph(object):
         def vertices(self):
             return self.__vertices
         
-        def isdirected(self):
-            return self.__directed
-        
         def weight(self):
             return self.__weight
         
+        def isdirected(self):
+            return self.__directed
+        
         def __repr__(self):
-            s1 = repr(self.__vertices)
-            s2 = str(self.__directed)
-            s3 = str(self.__weight)
-            return 'Edge{{{0}, d={1}, w={2}}}'.format(s1, s2, s3)
+            st = 'Edge {{vertices={0}, weight={1}, isdirected={2}}}'
+            s0 = repr(self.__vertices)
+            s1 = repr(self.__weight)
+            s2 = repr(self.__directed)
+            return st.format(s0, s1, s2)
     
     def __init__(self, weighted=False):
         if not isinstance(weighted, bool):
@@ -54,59 +55,58 @@ class Graph(object):
         self.__edges = set()
         self.__weighted = weighted
     
-    def add(self, v):
-        if v is None:
+    def add(self, vertex):
+        if vertex is None:
             raise TypeError('Object to be added must not be None.')
-        if not v in self.__vertices:
-            self.__vertices.add(v)
+        if not vertex in self.__vertices:
+            self.__vertices.add(vertex)
     
-    def remove(self, v):
-        if v is None:
+    def remove(self, vertex):
+        if vertex is None:
             raise TypeError('Object to be removed must not be None.')
-        if v in self.__vertices:
-            edges = set()
-            for x in self.__edges:
-                if v in x.vertices():
-                    edges.add(x)
-            for x in edges:
-                self.__edges.remove(x)
-            self.__vertices.remove(v)
+        if vertex in self.__vertices:
+            s = set()
+            for e in self.__edges:
+                if vertex in e.vertices():
+                    s.add(e)
+            self.__edges -= t
+            self.__vertices.remove(vertex)
     
-    def has_vertex(self, v):
-        if v is None:
+    def has_vertex(self, vertex):
+        if vertex is None:
             raise TypeError('Argument must not be None.')
-        return v in self.__vertices
+        return vertex in self.__vertices
     
     def vertices(self):
         return self.__vertices.copy()
     
-    def connect(self, v1, v2, directed=False, weight=None):
-        if v1 is None or v2 is None:
+    def connect(self, vertex1, vertex2, weight=None, directed=False):
+        if vertex1 is None or vertex2 is None:
             raise TypeError('Objects to be connected must not be None.')
-        if not isinstance(directed, bool):
-            raise TypeError('\'directed\' must be either True or False.')
-        if not self.__weighted and weight is not None:
-            raise ValueError('Edges must not be weighted in this graph.')
         if self.__weighted and weight is None:
             raise ValueError('Edges must be weighted in this graph.')
+        if not self.__weighted and weight is not None:
+            raise ValueError('Edges must not be weighted in this graph.')
         if self.__weighted and not isinstance(weight, (int, float)):
             raise TypeError('\'weight\' must be given by a number.')
-        self.add(v1)
-        self.add(v2)
-        e = Graph.__Edge(v1, v2, directed, weight)
+        if not isinstance(directed, bool):
+            raise TypeError('\'directed\' must be either True or False.')
+        self.add(vertex1)
+        self.add(vertex2)
+        e = Graph.__Edge(vertex1, vertex2, weight, directed)
         self.__edges.add(e)
         return e
     
-    def disconnect(self, e):
-        if e is None or not isinstance(e, Edge):
+    def disconnect(self, edge):
+        if edge is None or not isinstance(edge, Edge):
             raise TypeError('Argument must be an Edge object.')
-        if e in self.__edges:
-            self.__edges.remove(e)
+        if edge in self.__edges:
+            self.__edges.remove(edge)
     
-    def has_edge(self, e):
-        if e is None or not isinstance(e, Edge):
+    def has_edge(self, edge):
+        if edge is None or not isinstance(edge, Edge):
             raise TypeError('Argument must be an Edge object.')
-        return e in self.__edges
+        return edge in self.__edges
     
     def edges(self):
         return self.__edges.copy()
@@ -120,17 +120,17 @@ class Graph(object):
 
 class Dijkstra(object):
     
-    def find_shortest_path(g, src, dst):
-        if g is None or src is None or dst is None:
+    def find_shortest_path(graph, source, destination):
+        if graph is None or source is None or destination is None:
             raise TypeError('Arguments must not be null.')
-        if not isinstance(g, Graph):
+        if not isinstance(graph, Graph):
             raise TypeError('First argument must be a Graph object.')
-        if not g.has_vertex(src) or not g.has_vertex(dst):
+        if not graph.has_vertex(source) or not graph.has_vertex(destination):
             return []
-        if src == dst:
-            return [src]
+        if source == destination:
+            return [source]
         adjacency_table = {}
-        for e in g.edges():
+        for e in graph.edges():
             (v1, v2) = e.vertices()
             w = e.weight()
             if w is None:
@@ -146,17 +146,17 @@ class Dijkstra(object):
                 adjacency_list.append((v1, w))
         predecessor_table = {}
         distance_table = {}
-        h = []
-        for v in g.vertices():
+        queue = []
+        for v in graph.vertices():
             predecessor_table[v] = None
-            if v == src:
+            if v == source:
                 distance_table[v] = 0.0
-                heapq.heappush(h, (0.0, v))
+                heapq.heappush(queue, (0.0, v))
             else:
                 distance_table[v] = float('inf')
-                heapq.heappush(h, (float('inf'), v))
-        while 0 < len(h):
-            (d, v) = heapq.heappop(h)
+                heapq.heappush(queue, (float('inf'), v))
+        while 0 < len(queue):
+            (d, v) = heapq.heappop(queue)
             if d == float('inf'):
                 break
             if not v in adjacency_table:
@@ -166,34 +166,34 @@ class Dijkstra(object):
                 old_d = distance_table[x[0]]
                 new_d = d + x[1]
                 if new_d < old_d:
-                    h.remove((old_d, x[0]))
+                    queue.remove((old_d, x[0]))
                     predecessor_table[x[0]] = v
                     distance_table[x[0]] = new_d
-                    heapq.heappush(h, (new_d, x[0]))
-        path = []
-        p = dst
-        while p is not None:
-            path.insert(0, p)
-            p = predecessor_table[p]
-        if path[0] == src:
-            return path
+                    heapq.heappush(queue, (new_d, x[0]))
+        p = []
+        v = destination
+        while v is not None:
+            p.insert(0, v)
+            v = predecessor_table[v]
+        if p[0] == source:
+            return p
         else:
             return []
 
 g=Graph(weighted=True)
-g.connect('S', 'A', True, 1.0)
-g.connect('S', 'B', True, 4.0)
-g.connect('A', 'B', True, 4.5)
-g.connect('A', 'C', True, 2.0)
-g.connect('A', 'D', True, 5.0)
-g.connect('B', 'C', True, 2.5)
-g.connect('B', 'D', True, 1.5)
-g.connect('C', 'Z', True, 3.5)
-g.connect('C', 'B', True, 0.5)
-g.connect('C', 'D', True, 2.5)
-g.connect('D', 'A', True, 1.0)
-g.connect('D', 'C', True, 2.0)
-g.connect('D', 'Z', True, 1.0)
+g.connect('S', 'A', 1.0, True)
+g.connect('S', 'B', 4.0, True)
+g.connect('A', 'B', 4.5, True)
+g.connect('A', 'C', 2.0, True)
+g.connect('A', 'D', 5.0, True)
+g.connect('B', 'C', 2.5, True)
+g.connect('B', 'D', 1.5, True)
+g.connect('C', 'Z', 3.5, True)
+g.connect('C', 'B', 0.5, True)
+g.connect('C', 'D', 2.5, True)
+g.connect('D', 'A', 1.0, True)
+g.connect('D', 'C', 2.0, True)
+g.connect('D', 'Z', 1.0, True)
 print(Dijkstra.find_shortest_path(g, 'S', 'Z')) # --> ['S', 'A', 'C', 'B', 'D', 'Z']
 
 g.add('X')
