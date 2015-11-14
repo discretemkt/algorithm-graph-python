@@ -127,7 +127,7 @@ class WeightedGraph(Graph):
         if vertex1 is None or vertex2 is None:
             raise TypeError('Objects to be connected must not be None.')
         if weight is None:
-            raise ValueError('Every edge must be weighted in this graph.')
+            raise ValueError('Every edge must be weighted.')
         if not isinstance(weight, (int, float)):
             raise TypeError('Weight must be given by a number.')
         if isinstance(weight, bool):
