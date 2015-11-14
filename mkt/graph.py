@@ -109,52 +109,46 @@ class Dijkstra(object):
             return []
         if source == destination:
             return [source]
-        adjacency_table = {}
+        adj_list_table = {}
         for e in graph.edges():
             (v1, v2) = e.vertices()
             w = e.weight()
             if w is None:
                 w = 1.0
-            if not v1 in adjacency_table:
-                adjacency_table[v1] = []
-            adjacency_list = adjacency_table[v1]
-            adjacency_list.append((v2, w))
+            if not v1 in adj_list_table:
+                adj_list_table[v1] = []
+            adj_list_table[v1].append((v2, w))
             if not e.isdirected():
-                if not v2 in adjacency_table:
-                    adjacency_table[v2] = []
-                adjacency_list = adjacency_table[v2]
-                adjacency_list.append((v1, w))
-        predecessor_table = {}
-        distance_table = {}
+                if not v2 in adj_list_table:
+                    adj_list_table[v2] = []
+                adj_list_table[v2].append((v1, w))
+        dist_pred_table = {}
         queue = []
         for v in graph.vertices():
-            predecessor_table[v] = None
             if v == source:
-                distance_table[v] = 0.0
+                dist_pred_table[v] = (0.0, None)
                 heapq.heappush(queue, (0.0, v))
             else:
-                distance_table[v] = float('inf')
+                dist_pred_table[v] = (float('inf'), None)
                 heapq.heappush(queue, (float('inf'), v))
         while 0 < len(queue):
             (d, v) = heapq.heappop(queue)
             if d == float('inf'):
                 break
-            if not v in adjacency_table:
+            if not v in adj_list_table:
                 continue
-            adjacency_list = adjacency_table[v]
-            for x in adjacency_list:
-                old_d = distance_table[x[0]]
+            for x in adj_list_table[v]:
+                old_d = dist_pred_table[x[0]][0]
                 new_d = d + x[1]
                 if new_d < old_d:
                     queue.remove((old_d, x[0]))
-                    predecessor_table[x[0]] = v
-                    distance_table[x[0]] = new_d
+                    dist_pred_table[x[0]] = (new_d, v)
                     heapq.heappush(queue, (new_d, x[0]))
         p = []
         v = destination
         while v is not None:
             p.insert(0, v)
-            v = predecessor_table[v]
+            v = dist_pred_table[v][1]
         if p[0] == source:
             return p
         else:
