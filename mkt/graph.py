@@ -54,12 +54,12 @@ class Graph(object):
             for e in self.__edges:
                 if vertex in e.vertices():
                     s.add(e)
-            self.__edges -= t
+            self.__edges -= s
             self.__vertices.remove(vertex)
     
     def contains(self, vertex):
         if vertex is None:
-            raise TypeError('Argument must not be None.')
+            raise TypeError('Object to be looked up must not be None.')
         return vertex in self.__vertices
     
     def vertices(self):
@@ -97,6 +97,42 @@ class Graph(object):
     def clear(self):
         self.__edges.clear()
         self.__vertices.clear()
+
+class UnweightedGraph(Graph):
+    
+    def __init__(self):
+        super().__init__(False)
+    
+    def connect(self, vertex1, vertex2, directed=False):
+        if vertex1 is None or vertex2 is None:
+            raise TypeError('Objects to be connected must not be None.')
+        if not isinstance(directed, bool):
+            raise TypeError('\'directed\' must be either True or False.')
+        self.add(vertex1)
+        self.add(vertex2)
+        e = Edge(vertex1, vertex2, None, directed)
+        self._Graph__edges.add(e)
+        return e
+
+class WeightedGraph(Graph):
+    
+    def __init__(self):
+        super().__init__(True)
+    
+    def connect(self, vertex1, vertex2, weight, directed=False):
+        if vertex1 is None or vertex2 is None:
+            raise TypeError('Objects to be connected must not be None.')
+        if weight is None:
+            raise ValueError('Edges must be weighted in this graph.')
+        if not isinstance(weight, (int, float)) or isinstance(weight, bool):
+            raise TypeError('\'weight\' must be given by a number.')
+        if not isinstance(directed, bool):
+            raise TypeError('\'directed\' must be either True or False.')
+        self.add(vertex1)
+        self.add(vertex2)
+        e = Edge(vertex1, vertex2, weight, directed)
+        self._Graph__edges.add(e)
+        return e
 
 class Dijkstra(object):
     
@@ -154,7 +190,7 @@ class Dijkstra(object):
         else:
             return []
 
-g=Graph(weighted=True)
+g=WeightedGraph()
 g.connect('S', 'A', 1.0, True)
 g.connect('S', 'B', 4.0, True)
 g.connect('A', 'B', 4.5, True)
