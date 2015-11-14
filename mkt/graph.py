@@ -33,9 +33,9 @@ class Edge(object):
 
 class Graph(object):
     
-    def __init__(self, weighted=False):
-        if not isinstance(weighted, bool):
-            raise TypeError('\'weighted\' must be either True or False.')
+    def __init__(self, weighted=None):
+        if weighted is not None and not isinstance(weighted, bool):
+            raise TypeError('Argument `weighted` must be True or False.')
         self.__vertices = set()
         self.__edges = set()
         self.__weighted = weighted
@@ -68,14 +68,18 @@ class Graph(object):
     def connect(self, vertex1, vertex2, weight=None, directed=False):
         if vertex1 is None or vertex2 is None:
             raise TypeError('Objects to be connected must not be None.')
-        if self.__weighted and weight is None:
-            raise ValueError('Edges must be weighted in this graph.')
-        if not self.__weighted and weight is not None:
-            raise ValueError('Edges must not be weighted in this graph.')
-        if self.__weighted and not isinstance(weight, (int, float)):
-            raise TypeError('\'weight\' must be given by a number.')
+        if weight is not None:
+            if not isinstance(weight, (int, float)):
+                raise TypeError('Weight must be given by a number.')
+            if isinstance(weight, bool):
+                raise TypeError('Weight must be given by a number.')
+        if self.__weighted is not None:
+            if self.__weighted and weight is None:
+                raise ValueError('Every Edge must be weighted.')
+            if not self.__weighted and weight is not None:
+                raise ValueError('Every Edge must be unweighted.')
         if not isinstance(directed, bool):
-            raise TypeError('\'directed\' must be either True or False.')
+            raise TypeError('Argument `directed` must be True or False.')
         self.add(vertex1)
         self.add(vertex2)
         e = Edge(vertex1, vertex2, weight, directed)
@@ -107,7 +111,7 @@ class UnweightedGraph(Graph):
         if vertex1 is None or vertex2 is None:
             raise TypeError('Objects to be connected must not be None.')
         if not isinstance(directed, bool):
-            raise TypeError('\'directed\' must be either True or False.')
+            raise TypeError('Argument `directed` must be True or False.')
         self.add(vertex1)
         self.add(vertex2)
         e = Edge(vertex1, vertex2, None, directed)
@@ -123,11 +127,13 @@ class WeightedGraph(Graph):
         if vertex1 is None or vertex2 is None:
             raise TypeError('Objects to be connected must not be None.')
         if weight is None:
-            raise ValueError('Edges must be weighted in this graph.')
-        if not isinstance(weight, (int, float)) or isinstance(weight, bool):
-            raise TypeError('\'weight\' must be given by a number.')
+            raise ValueError('Every edge must be weighted in this graph.')
+        if not isinstance(weight, (int, float)):
+            raise TypeError('Weight must be given by a number.')
+        if isinstance(weight, bool):
+            raise TypeError('Weight must be given by a number.')
         if not isinstance(directed, bool):
-            raise TypeError('\'directed\' must be either True or False.')
+            raise TypeError('Argument `directed` must be True or False.')
         self.add(vertex1)
         self.add(vertex2)
         e = Edge(vertex1, vertex2, weight, directed)
@@ -141,6 +147,8 @@ class Dijkstra(object):
             raise TypeError('Arguments must not be null.')
         if not isinstance(graph, Graph):
             raise TypeError('First argument must be a Graph object.')
+        if graph.isweighted() is None:
+            raise ValueError('This type of graph is unsupported.')
         if not graph.contains(source) or not graph.contains(destination):
             return []
         if source == destination:
