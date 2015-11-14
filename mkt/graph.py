@@ -57,13 +57,13 @@ class Graph(object):
             self.__edges -= t
             self.__vertices.remove(vertex)
     
-    def has_vertex(self, vertex):
+    def contains(self, vertex):
         if vertex is None:
             raise TypeError('Argument must not be None.')
         return vertex in self.__vertices
     
     def vertices(self):
-        return self.__vertices
+        return iter(self.__vertices)
     
     def connect(self, vertex1, vertex2, weight=None, directed=False):
         if vertex1 is None or vertex2 is None:
@@ -88,13 +88,8 @@ class Graph(object):
         if edge in self.__edges:
             self.__edges.remove(edge)
     
-    def has_edge(self, edge):
-        if edge is None or not isinstance(edge, Edge):
-            raise TypeError('Argument must be an Edge object.')
-        return edge in self.__edges
-    
     def edges(self):
-        return self.__edges
+        return iter(self.__edges)
     
     def isweighted(self):
         return self.__weighted
@@ -110,7 +105,7 @@ class Dijkstra(object):
             raise TypeError('Arguments must not be null.')
         if not isinstance(graph, Graph):
             raise TypeError('First argument must be a Graph object.')
-        if not graph.has_vertex(source) or not graph.has_vertex(destination):
+        if not graph.contains(source) or not graph.contains(destination):
             return []
         if source == destination:
             return [source]
