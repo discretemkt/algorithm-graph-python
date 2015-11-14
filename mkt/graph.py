@@ -1,52 +1,37 @@
-import abc
 import heapq
 
-class Edge(object, metaclass=abc.ABCMeta):
+class Edge(object):
     
-    @abc.abstractmethod
+    def __init__(self, vertex1, vertex2, weight=None, directed=False):
+        assert vertex1 is not None
+        assert vertex2 is not None
+        assert not isinstance(weight, bool)
+        assert isinstance(weight, (int, float)) or weight is None
+        assert isinstance(directed, bool)
+        self.__vertices = (vertex1, vertex2)
+        self.__directed = directed
+        if weight is None:
+            self.__weight = None
+        else:
+            self.__weight = float(weight)
+    
     def vertices(self):
-        pass
+        return self.__vertices
     
-    @abc.abstractmethod
-    def isdirected(self):
-        pass
-    
-    @abc.abstractmethod
     def weight(self):
-        pass
+        return self.__weight
+    
+    def isdirected(self):
+        return self.__directed
+    
+    def __repr__(self):
+        st = 'Edge {{vertices={0}, weight={1}, isdirected={2}}}'
+        s0 = repr(self.__vertices)
+        s1 = repr(self.__weight)
+        s2 = repr(self.__directed)
+        return st.format(s0, s1, s2)
 
 class Graph(object):
-    
-    class __Edge(Edge):
-        
-        def __init__(self, vertex1, vertex2, weight=None, directed=False):
-            assert vertex1 is not None
-            assert vertex2 is not None
-            assert not isinstance(weight, bool)
-            assert isinstance(weight, (int, float)) or weight is None
-            assert isinstance(directed, bool)
-            self.__vertices = (vertex1, vertex2)
-            self.__directed = directed
-            if weight is None:
-                self.__weight = None
-            else:
-                self.__weight = float(weight)
-        
-        def vertices(self):
-            return self.__vertices
-        
-        def weight(self):
-            return self.__weight
-        
-        def isdirected(self):
-            return self.__directed
-        
-        def __repr__(self):
-            st = 'Edge {{vertices={0}, weight={1}, isdirected={2}}}'
-            s0 = repr(self.__vertices)
-            s1 = repr(self.__weight)
-            s2 = repr(self.__directed)
-            return st.format(s0, s1, s2)
     
     def __init__(self, weighted=False):
         if not isinstance(weighted, bool):
@@ -78,7 +63,7 @@ class Graph(object):
         return vertex in self.__vertices
     
     def vertices(self):
-        return self.__vertices.copy()
+        return self.__vertices
     
     def connect(self, vertex1, vertex2, weight=None, directed=False):
         if vertex1 is None or vertex2 is None:
@@ -93,7 +78,7 @@ class Graph(object):
             raise TypeError('\'directed\' must be either True or False.')
         self.add(vertex1)
         self.add(vertex2)
-        e = Graph.__Edge(vertex1, vertex2, weight, directed)
+        e = Edge(vertex1, vertex2, weight, directed)
         self.__edges.add(e)
         return e
     
@@ -109,7 +94,7 @@ class Graph(object):
         return edge in self.__edges
     
     def edges(self):
-        return self.__edges.copy()
+        return self.__edges
     
     def isweighted(self):
         return self.__weighted
